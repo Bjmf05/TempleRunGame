@@ -56,6 +56,7 @@
 MOV AX, @DATA
 MOV DS, AX 
 Inicio:
+    ;mov [Nivel_actual], 1
     CALL Limpia
     CALL Colocar_Cursor
     CALL Mostrar_Inicio
@@ -178,15 +179,21 @@ Establecer PROC NEAR
     jmp convertir_loop
 
     convertir_fin:
-    mov [Nivel_actual], 1
-    cmp ax, 15
-    jg Nivel_Mayor
-    mov [Nivel_actual], ax  ; Almacena el valor numérico en Nivel_actual
-    ret
-    nivel_Mayor:
-    mov ax, 15
-    mov [Nivel_actual], ax
-    ret
+        cmp ax, 1
+        jl Nivel_Menor
+        cmp ax, 15
+        jg Nivel_Mayor
+        mov [Nivel_actual], ax  ; Almacena el valor numérico en Nivel_actual
+        ret
+    Nivel_Menor:
+        mov ax, 1
+        mov [Nivel_actual], ax
+        ret
+    Nivel_Mayor:
+        mov ax, 15
+        mov [Nivel_actual], ax
+        ret
+
     limpiar_datos PROC NEAR
     ; Código para limpiar (inicializar) la variable
     mov si, 00h  ; Puntero a la variable        
@@ -297,6 +304,7 @@ Iniciar PROC NEAR
         pausa endp
 
     salir_Iniciar:
+    mov [Nivel_actual], 1
     RET
     Bucle_Delay PROC NEAR
 
