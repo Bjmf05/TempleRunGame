@@ -21,9 +21,21 @@
     Print_Nombre DB "Nombre del Jugador: $"
     Print_Nivel DB "Nivel de dificultad: $"
     Print_Puntos_Obtenidos DB "Puntos obtenidos: $"
-    Print_Dato_Actual DB 6 dup("$")
+    Print_Dato_Actual DB 7 dup("$")
+    Salir_Puntos_Print db "Presione Cualquier tecla para salir", 10, 13, "$"
     Print_Instrucciones DB "Instrucciones: ", 10, 13, "Para moverse arriba presione la tecla 'w' o la flecha hacia arriba", 10, 13, "Para moverse abajo presione la tecla 's' o la flecha hacia abajo", 10, 13, "Para pausar el juego presione la tecla 'p'", 10, 13, "Para subir de nivel presione la tecla 'n'", 10, 13, "Para salir del juego presione la tecla 'e'", 10, 13, "$"
   ;variables para el juego
+      Archivo_Puntos DB "Puntajes.txt", 0
+    BUFFER Db 7 DUP("$")
+    BUFFER2 Db 7 DUP("$")
+    BUFFER3 Db 7 DUP("$")
+    Print_Ranking_Puntos db "Maximos Puntajes Optenidos: $"
+    print_coma db ","
+    Puntos1 dw 0
+    Puntos2 dw 0
+    Puntos3 dw 0
+    revizar_datos db 0
+    cantidad_comas db 0
     Max_Mostrar_Datos dw 0
     cuadro_Personaje DB 219
     filaLimiteMin DB 10
@@ -65,7 +77,7 @@
 MOV AX, @DATA
 MOV DS, AX 
 Inicio:
-    ;mov [Nivel_actual], 1
+    mov puntos_Obtenidos , 1
     CALL Limpia
     CALL Colocar_Cursor
     CALL Mostrar_Inicio
@@ -330,6 +342,7 @@ Iniciar PROC NEAR
             RET
         pausa endp
     salir_Iniciar:
+    CALL Mostrar_Puntajes_de_Archivo
     mov [Nivel_actual], 1
     mov [puntos_Obtenidos], 1
     RET
@@ -590,7 +603,7 @@ Acerca PROC NEAR
     CMP ENDCDE, 00 ; ¿Lectura normal?
     JNZ Fin_Acerca ; No, salir
     CALL Mostrar_Caracter ; Sí, desplegar nombre
-    JMP CicloLEER ; Continuar
+    JMP CicloLEER 
 
     Fin_Acerca:
     mov ah, 01h
@@ -602,7 +615,7 @@ Acerca PROC NEAR
     RET
 
     
-    Abrir PROC NEAR
+    Abrir PROC 
         MOV AH, 3DH ; Petición para abrir
         MOV AL, 00 ; Archivo normal
         LEA DX, Archivo_Acerca
@@ -616,7 +629,7 @@ Acerca PROC NEAR
         RET
         Abrir ENDP
 
-    LeerRegistro PROC NEAR
+    LeerRegistro PROC 
         MOV AH,3FH ;Petición de lectura
         MOV BX,HANDLE
         MOV CX, 1;•3 0 para el nombre + 2 para C
@@ -632,7 +645,7 @@ Acerca PROC NEAR
 
     LeerRegistro ENDP
 
-    Mostrar_Caracter PROC NEAR
+    Mostrar_Caracter PROC 
         MOV AH, 40h
         MOV BX, 1
         LEA DX, Caracter
@@ -641,12 +654,12 @@ Acerca PROC NEAR
         Mostrar_Caracter ENDP
     
     Acerca ENDP 
-Fin PROC NEAR
+Fin PROC 
     mov ah, 4ch
     int 21h
     Fin ENDP
 
-Limpia PROC NEAR         
+Limpia PROC          
    mov ax,0600h
    mov bh,17h
    mov cx,0000h
@@ -655,7 +668,7 @@ Limpia PROC NEAR
    ret
     Limpia  endp
 
-Colocar_Cursor PROC NEAR
+Colocar_Cursor PROC 
     MOV AH, 02H
     MOV BH,00
     MOV DH, ROW
@@ -663,5 +676,248 @@ Colocar_Cursor PROC NEAR
     INT 10H
     RET
     Colocar_Cursor ENDP
+
+Mostrar_Puntajes_de_Archivo PROC
+    CALL Limpia
+        MOV AH, 02H
+    MOV BH,00
+    MOV DH, 3
+    MOV DL, 0
+    INT 10H
+    MOV BYTE PTR [ENDCDE], 00 
+    MOV WORD PTR [HANDLE], ?  
+    MOV BYTE PTR [Caracter], 0 
+    Mov SI, 0
+    mov di, 0
+    CALL Abrir_Puntos ; Abre archivo, designa DTA
+    CMP ENDCDE, 00 ; ¿Apertura válida?
+    JNZ Fin_Puntos ; No, salir
+
+    CicloLEER_Puntos1:
+    CALL LeerRegistro ; Lee registro en disco
+    CMP ENDCDE, 00 ; ¿Lectura normal?
+    JNZ Continuar_Puntos ; No, salir
+    CALL Mover_Datos_Puntos ; Sí, desplegar nombre
+    JMP CicloLEER_Puntos1 ; Continuar
+
+    Continuar_Puntos:
+    xor si, si
+    mov si, offset [BUFFER]     ; Puntero a la cadena
+    call cadena_A_Numero
+    mov Puntos1, ax
+      xor si, si
+      mov si, offset [BUFFER2]     ; Puntero a la cadena
+      call cadena_A_Numero
+      mov Puntos2, ax
+      xor si, si
+      mov si, offset [BUFFER3]     ; Puntero a la cadena
+      call cadena_A_Numero
+      mov Puntos3, ax
+
+   call OrdenarDatos
+   CALL Escribir_en_Archivo
+
+   Fin_Puntos:
+   posicion 0, 1
+      mov AH, 09h 
+	lea dx, Salir_Puntos_Print
+	int 21h
+   posicion 2, 1
+   mov AH, 09h 
+	lea dx, Print_Ranking_Puntos
+	int 21h
+   Call Mostrar_Puntajes_Ranking
+   mov [Nivel_actual], 1
+   jmp inicio
+    RET
+
+   cadena_A_Numero proc near
+    mov cx, 10         ; Inicializa el factor de multiplicación
+    xor ax, ax         ; Inicializa el acumulador
+    convertir_loop1:
+    mov bl, [si]       ; Carga el siguiente carácter de la cadena
+    cmp bl, '$'        ; Comprueba si es el final de la cadena
+    je  convertir_fin1
+    sub bl, '0'         ; Convierte el carácter a valor numérico
+    mul cx             ; Multiplica el acumulador por 10
+    add ax, bx     ; Suma el valor numérico al acumulador
+    inc si             ; Avanza al siguiente carácter
+    jmp convertir_loop1
+    convertir_fin1:
+    RET
+   cadena_A_Numero endp
+   OrdenarDatos PROC 
+         mov revizar_datos, 0
+         revizar:
+         inc revizar_datos
+        ; Comparación e intercambio de Dato1 y Dato2
+        mov ax, Puntos1
+        mov bx, Puntos2
+        call CompararEIntercambiar
+        mov Puntos1, ax
+        mov Puntos2, bx
+
+        ; Comparación e intercambio de Dato2 y Dato3
+        mov ax, Puntos2
+        mov bx, Puntos3
+        call CompararEIntercambiar
+        mov Puntos2, ax
+        mov Puntos3, bx
+        ; Comparación e intercambio de Dato3 y Dato4
+        mov ax, Puntos3
+        mov bx, puntos_Obtenidos
+        call CompararEIntercambiar
+        mov Puntos3, ax
+        mov puntos_Obtenidos, bx
+         cmp revizar_datos, 4
+         jle revizar
+        ret
+
+    ; Función para comparar dos valores y realizar el intercambio si es necesario
+    CompararEIntercambiar:
+        cmp ax, bx
+        jge NoIntercambiar
+        xchg ax, bx
+
+    NoIntercambiar:
+        ret
+   OrdenarDatos ENDP 
+
+    Abrir_Puntos PROC 
+        MOV AH, 3DH ; Petición para abrir
+        MOV AL, 00 ; Archivo normal
+        LEA DX, Archivo_Puntos
+        INT 21H
+        JC Error_Puntos2 ; ¿Error?
+        MOV HANDLE, AX 
+        RET
+
+        Error_Puntos2:
+        MOV ENDCDE, 1 ; Sí,
+        RET
+        Abrir_Puntos ENDP
+
+   Mover_Datos_Puntos PROC NEAR
+      LEA DX, Caracter
+      Mov CX, 1 
+      CALL Comas_Puntos
+      cmp cantidad_comas, 0
+      call Guardar_Datos_Puntos
+      RET
+
+    Guardar_Datos_Puntos proc near
+      cmp cantidad_comas, 1
+      jl llenar_buffer
+      je llenar_buffer2
+      jg llenar_buffer3
+      llenar_buffer:
+      MOV AL, BYTE PTR [Caracter]
+      MOV BYTE PTR [BUFFER + SI], AL
+      INC SI
+         RET
+      llenar_buffer2:
+         mov si, 0
+         MOV AL, BYTE PTR [Caracter]
+         MOV BYTE PTR [BUFFER2 + DI], AL
+         INC DI
+            RET
+      llenar_buffer3:
+         MOV AL, BYTE PTR [Caracter]
+         MOV BYTE PTR [BUFFER3 + SI], AL
+         INC SI
+            RET
+      Guardar_Datos_Puntos endp
+    Comas_Puntos proc near
+      CMP BYTE PTR [Caracter], ','
+      JE coma_encontrada
+      RET
+      coma_encontrada:
+      INC cantidad_comas
+      jmp CicloLEER_Puntos1
+      RET
+      Comas_Puntos endp
+ Mover_Datos_Puntos ENDP             
+Escribir_en_Archivo PROC 
+   xor ax, ax
+   xor bx, bx
+   xor cx, cx
+   MOV AH, 3CH       ; Función para abrir/crear archivo
+   MOV CX, 2         ; Modo de apertura (1: solo escritura, 2: crear o truncar)
+   LEA DX, Archivo_Puntos
+   INT 21H
+
+   MOV HANDLE, AX   ; Guardar el manejador del archivo
+   mov Max_Mostrar_Datos, 6
+   Call LlenarCadena
+   MOV AX,  Puntos1     
+   MOV DX, OFFSET Print_Dato_Actual
+   CALL INT_TO_STR 
+   ; Escribir Dato1 en el archivo
+   MOV AH, 40h      ; Función para escribir en archivo
+   MOV BX, HANDLE   
+   LEA DX, Print_Dato_Actual    ; Dirección del dato
+   MOV CX, 6        ; Longitud del dato en bytes
+   INT 21H
+   MOV AH, 40h     
+   MOV BX, HANDLE   
+   LEA DX, print_coma    
+   MOV CX, 1       
+   INT 21H
+   Call LlenarCadena
+   MOV AX,  Puntos2     
+   MOV DX, OFFSET Print_Dato_Actual
+   CALL INT_TO_STR 
+   MOV AH, 40h      
+   MOV BX, HANDLE   
+   LEA DX, Print_Dato_Actual    
+   MOV CX, 6        
+   INT 21H
+   MOV AH, 40h      
+   MOV BX, HANDLE   
+   LEA DX, print_coma    
+   MOV CX, 1       
+   INT 21H
+   Call LlenarCadena
+   MOV AX,  Puntos3    
+   MOV DX, OFFSET Print_Dato_Actual
+   CALL INT_TO_STR 
+   MOV AH, 40h      
+   MOV BX, HANDLE   
+   LEA DX, Print_Dato_Actual    
+   MOV CX, 6        
+   INT 21H
+   MOV AH, 3Eh      ; Función para cerrar archivo
+   MOV BX, HANDLE   
+   INT 21H
+
+   RET
+ Escribir_en_Archivo ENDP 
+   Mostrar_Puntajes_Ranking PROC 
+    MOV BYTE PTR [ENDCDE], 00 
+    MOV WORD PTR [HANDLE], ?  
+    MOV BYTE PTR [Caracter], 0 
+    
+    CALL Abrir_Puntos ; Abre archivo, designa DTA
+    CMP ENDCDE, 00 ; ¿Apertura válida?
+    JNZ Fin_Mostrar_Puntos ; No, salir
+
+    CicloLEER_P:
+    CALL LeerRegistro ; Lee registro en disco
+    CMP ENDCDE, 00 ; ¿Lectura normal?
+    JNZ Fin_Mostrar_Puntos ; No, salir
+    CALL Mostrar_Caracter ; Sí, desplegar nombre
+    JMP CicloLEER_P 
+
+    Fin_Mostrar_Puntos:
+    posicion 4, 30
+    mov ah, 01h
+    int 21h
+    cmp al, 0dh 
+    je Salir_Mostrar_Puntos
+
+    Salir_Mostrar_Puntos:
+    RET
+    Mostrar_Puntajes_Ranking ENDP 
+Mostrar_Puntajes_de_Archivo ENDP
 
 END
