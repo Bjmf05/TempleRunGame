@@ -335,9 +335,7 @@ Iniciar PROC NEAR
     mov ah, 01h
     int 16h  ; Se preciona una tecla?
 
-    call compare
-    cmp vidas,0
-    je salir_Iniciar
+
 
     jz sin_tecla_presionada; Si se preciona una tecla, entonces se lee el codigo de la tecla 
     mov ah, 00h
@@ -360,6 +358,9 @@ Iniciar PROC NEAR
     cmp contar_ciclos, 10
     jge aumentar_nivel
     inc contar_ciclos
+    call compare
+    cmp vidas,0
+    je salir_Iniciar
     jmp ciclo
     aumentar_nivel:
         mov contar_ciclos, 0
@@ -451,9 +452,9 @@ Iniciar PROC NEAR
     ;antiguo disenno Marco de juego
     Dibujar_Cuadro PROC NEAR
         posicion 9,18
-        Escribir "-",39
+        Escribir "-",40
         posicion 15,18
-        Escribir "-",39
+        Escribir "-",40
         mov counter,0
         mov sumar,10
         Cont:
@@ -467,7 +468,7 @@ Iniciar PROC NEAR
             posicion sumar,18  
             Escribir "-",1
 
-            posicion sumar,56
+            posicion sumar,57
             Escribir "-",1
 
             inc counter
