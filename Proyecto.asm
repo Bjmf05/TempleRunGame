@@ -50,7 +50,7 @@
     sumar DB 10
     contar_ciclos db 0
     puntos_Obtenidos dw 1
-    vida dw 30
+    vida dw 10
     ;carga y muestra de patron
     cuadro db 219        ; Caracter ASCII para representar el cuadro verde
     Archivo DB 'mapa.txt',0 ; Nombre del archivo
@@ -122,11 +122,11 @@
             mov bh, 0h     ; Página 0
             cmp al, 'a'
             jne camin
-            mov bl, 70h
+            mov bl, 0h
             mov al, cuadro
             jmp contin
             camin:
-            mov bl, 01h
+            mov bl, 46h
             mov al, cuadro
             contin:
                 int 10h        ; Llama a la interrupción 21h para imprimir el carácter
@@ -136,7 +136,7 @@
     Escribir macro caracter, cantidad
         mov ah, 09h
         mov al, caracter
-        mov bl, 00h
+        mov bl, 77h
         mov cx, cantidad
         int 10h
         endm
@@ -197,7 +197,7 @@ Mostrar_Inicio PROC NEAR
     Mostrar_Inicio ENDP
 
 Seleccion PROC NEAR
-    mov vida,30
+    mov vida,10
     mov fila,12
     posicion 18, 36
     mov ah, 01h
@@ -540,7 +540,7 @@ Iniciar PROC NEAR
         mov ah, 09h       ; Funcion para imprimir un caracter en pantalla
         mov al, " "    ; Caracter a imprimir (ASCII 219)
         mov bh, 0h        ; Pagina 0
-        mov bl, 02h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
+        mov bl, 60h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
         mov cx, 03        ; Cantidad de veces que se imprime el caracter
         mov dh, fila      ; Fila
         mov dl, columna   ; Columna
@@ -997,7 +997,7 @@ Fin PROC
 
 Limpia PROC          
    mov ax,0600h
-   mov bh,17h
+   mov bh,05h
    mov cx,0000h
    mov dx,184fh
    int 10h
