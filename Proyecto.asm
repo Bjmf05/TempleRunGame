@@ -1284,6 +1284,7 @@ Escribir_en_Archivo PROC
     int 21h
     cmp al, 0dh 
     je Salir_Mostrar_Puntos
+    jmp Fin_Mostrar_Puntos
 
     Salir_Mostrar_Puntos:
     RET
