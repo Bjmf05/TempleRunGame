@@ -16,7 +16,7 @@
     Mensaje_Iniciar DB "3-Iniciar juego", 10, 13, "$"
     Mensaje_Acerca DB "4-Sobre Nosotros", 10, 13, "$"
     Mensaje_Fin DB "5-Salir", 10, 13, "$"
-    seleccionN DB "Seleccione el escenario", 10, 13, "1-Primer escenario", 10, 13, "2-Segundo escenario", 10, 13, "3-Tercer escenario", 10, 13, "4-Cuarto escenario", 10, 13, "$"
+    seleccionN DB "Seleccione el escenario", 10, 13, " 1-Primer escenario", 10, 13, " 2-Segundo escenario", 10, 13, " 3-Tercer escenario", 10, 13, " 4-Cuarto escenario", 10, 13, "$"
     Nombre DB 20 dup('$')
     Nivel DB 3 dup('$')
     Fin_de_La_Partida db "FIN DE LA PARTIDA$"
@@ -57,7 +57,6 @@
     Archivo2 DB 'mapa2.txt',0 ; Nombre del archivo
     Archivo3 DB 'mapa3.txt',0 ; Nombre del archivo
     Archivo4 DB 'mapa4.txt',0 ; Nombre del archivo
-    Archivo5 DB 'mapa5.txt',0 ; Nombre del archivo
     vector0 db 30 dup(?)  ; Vector de longitud 30
     vector1 db 30 dup(?)  ; Vector de longitud 30
     vector2 db 30 dup(?)  ; Vector de longitud 30
