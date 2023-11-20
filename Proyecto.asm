@@ -6,6 +6,7 @@
     Caracter DB ?
     ROW DB 00
   ;Datos para mostrar  
+    Abrir_MSG DB 10,13,'ERROR AL ABRIR EL ARCHIVO$'
     Mensaje_Menu DB "Bienvenido al Menu", 10, 13, "$"
     Mensaje_Seleccion DB "Digite el numero para seleccionar una opcion", 10, 13, "$"
     Mensaje_Establecer DB "1-Establecer nivel y nombre del jugador", 10, 13, "$"
@@ -25,7 +26,7 @@
     Salir_Puntos_Print db "Presione Cualquier tecla para salir", 10, 13, "$"
     Print_Instrucciones DB "Instrucciones: ", 10, 13, "Para moverse arriba presione la tecla 'w' o la flecha hacia arriba", 10, 13, "Para moverse abajo presione la tecla 's' o la flecha hacia abajo", 10, 13, "Para pausar el juego presione la tecla 'p'", 10, 13, "Para subir de nivel presione la tecla 'n'", 10, 13, "Para salir del juego presione la tecla 'e'", 10, 13, "$"
   ;variables para el juego
-      Archivo_Puntos DB "Puntajes.txt", 0
+    Archivo_Puntos DB "Puntajes.txt", 0
     BUFFER Db 7 DUP("$")
     BUFFER2 Db 7 DUP("$")
     BUFFER3 Db 7 DUP("$")
@@ -46,12 +47,67 @@
     sumar DB 10
     contar_ciclos db 0
     puntos_Obtenidos dw 1
+    vidas db 3
+    ;carga y muestra de patron
+    cuadro db 219        ; Caracter ASCII para representar el cuadro verde
+    Archivo DB 'mapa.txt',0 ; Nombre del archivo
+    vector0 db 30 dup(?)  ; Vector de longitud 30
+    vector1 db 30 dup(?)  ; Vector de longitud 30
+    vector2 db 30 dup(?)  ; Vector de longitud 30
+    vector3 db 30 dup(?)  ; Vector de longitud 30
+    vector4 db 30 dup(?)  ; Vector de longitud 30 
+    num db 10
+    ccc db 10
+
+    similar macro vectr   ;encargado de comparar
+        local down
+        lea si,vectr
+        mov al, [di]      ; Carga el valor del elemento actual
+        cmp al,'a'
+        jne down
+        dec vidas
+        down:
+        endm
+    avanzar macro vect    ;encargado de corrimiento de vector
+        local shift
+        mov cx,29
+        lea di,vect
+        shift:
+            mov al, [di]          ; Carga el valor del elemento actual
+            mov bl, [di + 1]      ; Carga el valor del elemento siguiente
+            mov [di], bl          ; Coloca el valor del siguiente elemento en la posición actual
+            mov [di + 1], al      ; Coloca el valor actual en la posición siguiente
+            inc di
+            loop shift
+        endm
     posicion macro x, y 
         mov ah, 02h
         mov bh, 00h
         mov dh, x
         mov dl, y
         int 10h
+        endm
+    printVector macro vect
+        local print_loop, pared,contin,camin
+        mov cx,30
+        lea di,vect+29
+        mov bl, 70h       ; selecciona color
+        print_loop:
+            mov ah, 09h    ; Función 02h: Imprimir carácter en pantalla
+            mov al, [di]   ; Carga el carácter actual en aL
+            mov bh, 0h     ; Página 0
+            cmp al, 'a'
+            jne camin
+            mov bl, 70h
+            mov al, cuadro
+            jmp contin
+            camin:
+            mov bl, 01h
+            mov al, cuadro
+            contin:
+                int 10h        ; Llama a la interrupción 21h para imprimir el carácter
+                dec di         ; Avanza al siguiente elemento
+            loop print_loop
         endm
     Escribir macro caracter, cantidad
         mov ah, 09h
@@ -327,10 +383,18 @@ Iniciar PROC NEAR
             JMP ciclo
         pausa proc near
             CALL Limpia
+            ;cambios Brian
+            CALL Abrir_Archi
+            CALL Llenar_Vector
+            CALL Llenar_Vector1
+            CALL Llenar_Vector2
+            CALL Llenar_Vector3
+            CALL Llenar_Vector4
+            ;fin cambios
             CALL Mostrar_Datos
             CALL Dibujar_Cuadro
-            call Mostrar_Obstaculo
-            call Mostrar_Avatar            
+            CALL Mostrar_Obstaculo
+            CALL Mostrar_Avatar
                 mov ah, 01h
                 int 21h
                 cmp al, 'p'
@@ -360,7 +424,7 @@ Iniciar PROC NEAR
         jle outer_loop ; Salta al bucle exterior
         mov  [contador_loop], 0
         RET
-        Bucle_Delay ENDP
+    Bucle_Delay ENDP
     
     Actualizar_Nivel PROC NEAR
         inc [Nivel_actual]
@@ -370,14 +434,15 @@ Iniciar PROC NEAR
         MOV AX, Nivel_actual      ; Cargar el valor de 'count' en AX
         dec ax
         mov bl, al            ; Mueve el valor de al a bl
-        shl bl, 1             ; Multiplica bl por 2 
+        shl bl, 1             ; Multiplica bl por 2
         mov ax, [table_Nivel + bx]  ; Usa bx como índice
         mov cx, [final_loop]
         sub cx, ax
         mov [final_loop], cx
         ret
-        Actualizar_Nivel ENDP
+    Actualizar_Nivel ENDP
 
+    ;antiguo disenno Marco de juego
     Dibujar_Cuadro PROC NEAR
         posicion 9,18
         Escribir "-",39
@@ -403,32 +468,34 @@ Iniciar PROC NEAR
             cmp counter,5
             JNE Cont
         RET
-        Dibujar_Cuadro ENDP
+    Dibujar_Cuadro ENDP
 
     Mostrar_Obstaculo PROC NEAR
-            posicion fila2, columna2
-            mov ah, 09h       ; Funcion para imprimir un caracter en pantalla
-            mov al, "A"    ; Caracter a imprimir (ASCII 219)
-            mov bh, 0h        ; Pagina 0
-            mov bl, 02h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
-            mov cx, 03        ; Cantidad de veces que se imprime el caracter
-            mov dh, fila2      ; Fila
-            mov dl, columna2   ; Columna
-            int 10H
-            mov al, columnaMin2
-            cmp columna2, al
-            jl columnaLimiteMin2
-            JMP Seguir
-            columnaLimiteMin2:
-            mov al,columnaMax2
-            mov columna2, al
-            Seguir:
-            ret
-        Mostrar_Obstaculo ENDP
+        posicion fila2, columna2
+        mov ah, 09h       ; Funcion para imprimir un caracter en pantalla
+        mov al, "A"    ; Caracter a imprimir (ASCII 219)
+        mov bh, 0h        ; Pagina 0
+        mov bl, 02h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
+        mov cx, 03        ; Cantidad de veces que se imprime el caracter
+        mov dh, fila2      ; Fila
+        mov dl, columna2   ; Columna
+        int 10H
+        mov al, columnaMin2
+        cmp columna2, al
+        jl columnaLimiteMin2
+        JMP Seguir
+        columnaLimiteMin2:
+        mov al,columnaMax2
+        mov columna2, al
+        Seguir:
+        ret
+    Mostrar_Obstaculo ENDP
+
+    ;Avatar
     Mostrar_Avatar PROC NEAR
         posicion fila, columna
         mov ah, 09h       ; Funcion para imprimir un caracter en pantalla
-        mov al, "E"    ; Caracter a imprimir (ASCII 219)
+        mov al, " "    ; Caracter a imprimir (ASCII 219)
         mov bh, 0h        ; Pagina 0
         mov bl, 02h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
         mov cx, 03        ; Cantidad de veces que se imprime el caracter
@@ -436,7 +503,215 @@ Iniciar PROC NEAR
         mov dl, columna   ; Columna
         int 10H
         RET
-        Mostrar_Avatar ENDP
+    Mostrar_Avatar ENDP
+
+    ;Encargado de comparar
+    compare PROC
+        mov dl,fila
+        sub dl, 10
+        cmp dl,0
+        je vervctr0
+        cmp dl,1
+        je vervctr1
+        cmp dl,2
+        je vervctr2
+        cmp dl,3
+        je vervctr3
+        cmp dl,4
+        je vervctr4
+        jmp final
+        vervctr0:
+            similar vector0
+            jmp final
+        vervctr1:
+            similar vector1
+            jmp final
+        vervctr2:
+            similar vector2
+            jmp final
+        vervctr3:
+            similar vector3
+            jmp final
+        vervctr4:
+            similar vector4
+            jmp final
+        final:
+        ret
+    compare ENDP
+
+    ;Serie de llenado de vectores
+    Llenar_Vector PROC
+        lea di, vector0
+        lercar:
+            mov cx, 1 ; Leer un solo caracter
+            mov Caracter,0
+            mov ccc,0
+            lopo:
+                mov num,0
+                MOV AH, 3FH ; Peticion de lectura
+                MOV BX, HANDLE
+                LEA DX, Caracter ; Almacena el caracter leído
+                INT 21H
+                mov al, Caracter
+                cmp al, 0Dh ; Fin de linea?
+                je lopo
+                cmp al, 0Ah ; salto de linea?
+                je finn
+                repet:
+                mov [di],al
+                inc di
+                inc num
+                cmp num, 6
+                jne repet
+                loop lopo
+                inc ccc
+                cmp ccc,5
+                jne lercar
+            finn: 
+        ret
+    Llenar_Vector ENDP
+    Llenar_Vector1 PROC
+        lea di, vector1
+        lercar1:
+            mov cx, 1 ; Leer un solo caracter
+            mov Caracter,0
+            mov ccc,0
+            lopo1:
+                mov num,0
+                MOV AH, 3FH ; Peticion de lectura
+                MOV BX, HANDLE
+                LEA DX, Caracter ; Almacena el caracter leído
+                INT 21H
+                mov al, Caracter
+                cmp al, 0Dh ; Fin de linea?
+                je lopo1
+                cmp al, 0Ah ; salto de linea?
+                je finn1
+                repet1:
+                mov [di],al
+                inc di
+                inc num
+                cmp num, 6
+                jne repet1
+                loop lopo1
+                inc ccc
+                cmp ccc,5
+                jne lercar1
+            finn1: 
+        ret
+    Llenar_Vector1 ENDP
+    Llenar_Vector2 PROC
+        lea di, vector2
+        lercar2:
+            mov cx, 1 ; Leer un solo caracter
+            mov Caracter,0
+            mov ccc,0
+            lopo2:
+                mov num,0
+                MOV AH, 3FH ; Peticion de lectura
+                MOV BX, HANDLE
+                LEA DX, Caracter ; Almacena el caracter leído
+                INT 21H
+                mov al, Caracter
+                cmp al, 0Dh ; Fin de linea?
+                je lopo2
+                cmp al, 0Ah ; salto de linea?
+                je finn2
+                repet2:
+                mov [di],al
+                inc di
+                inc num
+                cmp num, 6
+                jne repet2
+                loop lopo2
+                inc ccc
+                cmp ccc,5
+                jne lercar2
+            finn2:
+        ret
+    Llenar_Vector2 ENDP
+    Llenar_Vector3 PROC
+        lea di, vector3
+        lercar3:
+            mov cx, 1 ; Leer un solo caracter
+            mov Caracter,0
+            mov ccc,0
+            lopo3:
+                mov num,0
+                MOV AH, 3FH ; Peticion de lectura
+                MOV BX, HANDLE
+                LEA DX, Caracter ; Almacena el caracter leído
+                INT 21H
+                mov al, Caracter
+                cmp al, 0Dh ; Fin de linea?
+                je lopo3
+                cmp al, 0Ah ; salto de linea?
+                je finn3
+                repet3:
+                mov [di],al
+                inc di
+                inc num
+                cmp num, 6
+                jne repet3
+                loop lopo3
+                inc ccc
+                cmp ccc,5
+                jne lercar3
+            finn3: 
+        ret
+    Llenar_Vector3 ENDP
+    Llenar_Vector4 PROC
+        lea di, vector4
+        lercar4:
+            mov cx, 1 ; Leer un solo caracter
+            mov Caracter,0
+            mov ccc,0
+            lopo4:
+                mov num,0
+                MOV AH, 3FH ; Peticion de lectura
+                MOV BX, HANDLE
+                LEA DX, Caracter ; Almacena el caracter leído
+                INT 21H
+                mov al, Caracter
+                cmp al, 0Dh ; Fin de linea?
+                je lopo4
+                cmp al, 0Ah ; salto de linea?
+                je finn4
+                cmp al, 00h ; Fin de archivo?
+                je finn4
+                repet4:
+                mov [di],al
+                inc di
+                inc num
+                cmp num, 6
+                jne repet4
+                loop lopo4
+                inc ccc
+                cmp ccc,5
+                jne lercar4
+            finn4:
+        ret
+    Llenar_Vector4 ENDP
+    
+    ;Abrir archivo
+    Abrir_Archi PROC 
+      MOV AH, 3DH ; Peticion para abrir
+      MOV AL, 00 ; Archivo normal
+      LEA DX, Archivo
+      INT 21H
+      JC Error_Abrir ; Error?
+      MOV HANDLE, AX ; no, guardar manejador
+      RET
+      Error_Abrir:
+         MOV ENDCDE, 01 ; si,
+         mov AH, 09h
+         LEA DX, Abrir_MSG ; desplegar
+         INT 21H
+         RET
+   Abrir_Archi ENDP
+
+
+    ;Datos
     Mostrar_Datos PROC NEAR
         CALL Limpia 
         posicion 19, 0
@@ -481,7 +756,25 @@ Iniciar PROC NEAR
         INT 21h 
         
     CALL Dibujar_Cuadro 
-    dec columna2
+    posicion 10,26
+    printVector vector0
+    avanzar vector0
+    
+    posicion 11,26
+    printVector vector1
+    avanzar vector1
+    
+    posicion 12,26
+    printVector vector2
+    avanzar vector2
+    
+    posicion 13,26
+    printVector vector3
+    avanzar vector3
+    
+    posicion 14,26
+    printVector vector4
+    avanzar vector4
     call Mostrar_Obstaculo
     call Mostrar_Avatar
         RET
@@ -526,7 +819,7 @@ Iniciar PROC NEAR
         RET
         INT_TO_STR ENDP
 
-        LlenarCadena proc near
+    LlenarCadena proc near
         mov si, 00h
         LlenarCadena1:
         mov al, '$'
@@ -537,7 +830,7 @@ Iniciar PROC NEAR
         cmp si, Max_Mostrar_Datos
         jl LlenarCadena1
             RET
-        LlenarCadena ENDP
+    LlenarCadena ENDP
 
     Mostrar_Datos ENDP
 
@@ -679,7 +972,7 @@ Colocar_Cursor PROC
 
 Mostrar_Puntajes_de_Archivo PROC
     CALL Limpia
-        MOV AH, 02H
+    MOV AH, 02H
     MOV BH,00
     MOV DH, 3
     MOV DL, 0
