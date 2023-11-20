@@ -14,7 +14,7 @@
     Mensaje_Nivel DB 10, 13, "Ingrese el nivel de dificultad", 10,13 ,"(Con un maximo de 2 caracteres, solo se tomara en cuenta numeros)", 10, 13, "$"
     Mensaje_Escenario DB "2-Seleccione el escenario", 10, 13, "$"
     Mensaje_Iniciar DB "3-Iniciar juego", 10, 13, "$"
-    Mensaje_Acerca DB "4-Acerca de", 10, 13, "$"
+    Mensaje_Acerca DB "4-Sobre Nosotros", 10, 13, "$"
     Mensaje_Fin DB "5-Salir", 10, 13, "$"
     Nombre DB 20 dup('$')
     Nivel DB 3 dup('$')
@@ -33,6 +33,7 @@
     BUFFER3 Db 7 DUP("$")
     Print_Ranking_Puntos db "Maximos Puntajes Optenidos Hasta el Momento: $"
     print_coma db ","
+    Print_vida db "Vidas: $"
     Puntos1 dw 0
     Puntos2 dw 0
     Puntos3 dw 0
@@ -48,7 +49,7 @@
     sumar DB 10
     contar_ciclos db 0
     puntos_Obtenidos dw 1
-    vidas db 3
+    vidas dw 3
     ;carga y muestra de patron
     cuadro db 219        ; Caracter ASCII para representar el cuadro verde
     Archivo DB 'mapa.txt',0 ; Nombre del archivo
@@ -310,10 +311,6 @@ Establecer PROC NEAR
 
 
 Escenario PROC NEAR
-    mov AH, 2ch
-    int 21H
-    mov primer_Segundo, dh
-    call niveles_auto
     RET
     Escenario ENDP
 Iniciar PROC NEAR    
@@ -733,8 +730,30 @@ Iniciar PROC NEAR
         mov ah, 09h
         lea dx, Print_Puntos_Obtenidos
         int 21h
+
         mov Max_Mostrar_Datos, 5
         Call LlenarCadena
+        MOV AX, puntos_Obtenidos      ; Cargar el valor de 'count' en AX
+        MOV DX, OFFSET Print_Dato_Actual
+        CALL INT_TO_STR  ; Llama a una funcion para convertir el numero en una cadena
+        posicion 1, 60
+        MOV AH, 09h        ; Servicio para imprimir una cadena
+        MOV DX, OFFSET  Print_Dato_Actual ; DX apunta a la cadena
+        INT 21h 
+
+        posicion 3, 40
+        mov ah, 09h
+        lea dx, Print_vida
+        int 21h
+        mov Max_Mostrar_Datos, 4
+        Call LlenarCadena
+        MOV AX, vidas      ; Cargar el valor de 'count' en AX
+        MOV DX, OFFSET Print_Dato_Actual
+        CALL INT_TO_STR  ; Llama a una funcion para convertir el numero en una cadena
+        MOV AH, 09h        ; Servicio para imprimir una cadena
+        MOV DX, OFFSET  Print_Dato_Actual ; DX apunta a la cadena
+        INT 21h 
+
         ;dibujar los vectores en pantalla
         posicion 10,26
         printVector vector0
@@ -760,13 +779,6 @@ Iniciar PROC NEAR
 
         call Mostrar_Avatar
         
-        MOV AX, puntos_Obtenidos      ; Cargar el valor de 'count' en AX
-        MOV DX, OFFSET Print_Dato_Actual
-        CALL INT_TO_STR  ; Llama a una funcion para convertir el numero en una cadena
-        posicion 1, 60
-        MOV AH, 09h        ; Servicio para imprimir una cadena
-        MOV DX, OFFSET  Print_Dato_Actual ; DX apunta a la cadena
-        INT 21h 
         
     CALL Dibujar_Cuadro
         RET
