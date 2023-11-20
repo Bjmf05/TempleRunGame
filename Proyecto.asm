@@ -335,10 +335,6 @@ Iniciar PROC NEAR
     mov ah, 01h
     int 16h  ; Se preciona una tecla?
 
-    call compare
-    cmp vidas,0
-    je salir_Iniciar
-
     jz sin_tecla_presionada; Si se preciona una tecla, entonces se lee el codigo de la tecla 
     mov ah, 00h
     int 16h
@@ -356,6 +352,10 @@ Iniciar PROC NEAR
     je pausa_Llamar
     cmp al, 'n'
     je subir_nivel
+       call compare
+       
+    cmp vidas,0
+    je salir_Iniciar
     sin_tecla_presionada:
     cmp contar_ciclos, 10
     jge aumentar_nivel
