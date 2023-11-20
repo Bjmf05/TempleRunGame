@@ -61,7 +61,7 @@
 
     similar macro vectr   ;encargado de comparar
         local down
-        lea si,vectr
+        lea di,vectr
         mov al, [di]      ; Carga el valor del elemento actual
         cmp al,'a'
         jne down
@@ -315,8 +315,15 @@ Escenario PROC NEAR
     call niveles_auto
     RET
     Escenario ENDP
-Iniciar PROC NEAR
-    
+Iniciar PROC NEAR    
+    ;cambios Brian
+    CALL Abrir_Archi
+    CALL Llenar_Vector
+    CALL Llenar_Vector1
+    CALL Llenar_Vector2
+    CALL Llenar_Vector3
+    CALL Llenar_Vector4
+    ;fin cambios
     mov AH, 2ch
     int 21H
     mov primer_Segundo, dh
@@ -324,30 +331,36 @@ Iniciar PROC NEAR
     mov [segundo_Se], 0
     CALL Mostrar_Datos
     call Bucle_Delay
-      mov ah, 01h
-   int 16h  ; Se preciona una tecla?
-   jz sin_tecla_presionada; Si se preciona una tecla, entonces se lee el codigo de la tecla 
-   mov ah, 00h
-   int 16h
-   cmp al, 'w'
-   je mover_arriba
-   cmp al, 's'
-   je mover_abajo
-      cmp ah, 'H'
-   je mover_arriba
-   cmp ah, 'P'
-   je mover_abajo
-   cmp al, 'e'
-   je salir_Iniciar
-   cmp al, 'p'
-   je pausa_Llamar
-   cmp al, 'n'
-   je subir_nivel
-   sin_tecla_presionada:
+
+    mov ah, 01h
+    int 16h  ; Se preciona una tecla?
+
+    call compare
+    cmp vidas,0
+    je salir_Iniciar
+
+    jz sin_tecla_presionada; Si se preciona una tecla, entonces se lee el codigo de la tecla 
+    mov ah, 00h
+    int 16h
+    cmp al, 'w'
+    je mover_arriba
+    cmp al, 's'
+    je mover_abajo
+    cmp ah, 'H'
+    je mover_arriba
+    cmp ah, 'P'
+    je mover_abajo
+    cmp al, 'e'
+    je salir_Iniciar
+    cmp al, 'p'
+    je pausa_Llamar
+    cmp al, 'n'
+    je subir_nivel
+    sin_tecla_presionada:
     cmp contar_ciclos, 10
     jge aumentar_nivel
     inc contar_ciclos
-   jmp ciclo
+    jmp ciclo
     aumentar_nivel:
         mov contar_ciclos, 0
         call niveles_auto
@@ -388,17 +401,9 @@ Iniciar PROC NEAR
     RET
         pausa proc near
             CALL Limpia
-            ;cambios Brian
-            CALL Abrir_Archi
-            CALL Llenar_Vector
-            CALL Llenar_Vector1
-            CALL Llenar_Vector2
-            CALL Llenar_Vector3
-            CALL Llenar_Vector4
-            ;fin cambios
             CALL Mostrar_Datos
+        
             CALL Dibujar_Cuadro
-            CALL Mostrar_Obstaculo
             CALL Mostrar_Avatar
                 mov ah, 01h
                 int 21h
@@ -471,26 +476,7 @@ Iniciar PROC NEAR
         RET
     Dibujar_Cuadro ENDP
 
-    Mostrar_Obstaculo PROC NEAR
-        posicion fila2, columna2
-        mov ah, 09h       ; Funcion para imprimir un caracter en pantalla
-        mov al, "A"    ; Caracter a imprimir (ASCII 219)
-        mov bh, 0h        ; Pagina 0
-        mov bl, 02h       ; Atributo de color: Fondo verde (0) y caracter blanco (2)
-        mov cx, 03        ; Cantidad de veces que se imprime el caracter
-        mov dh, fila2      ; Fila
-        mov dl, columna2   ; Columna
-        int 10H
-        mov al, columnaMin2
-        cmp columna2, al
-        jl columnaLimiteMin2
-        JMP Seguir
-        columnaLimiteMin2:
-        mov al,columnaMax2
-        mov columna2, al
-        Seguir:
-        ret
-    Mostrar_Obstaculo ENDP
+    
 
     ;Avatar
     Mostrar_Avatar PROC NEAR
@@ -711,7 +697,6 @@ Iniciar PROC NEAR
          RET
    Abrir_Archi ENDP
 
-
     ;Datos
     Mostrar_Datos PROC NEAR
         CALL Limpia 
@@ -747,6 +732,30 @@ Iniciar PROC NEAR
         int 21h
         mov Max_Mostrar_Datos, 5
         Call LlenarCadena
+        ;dibujar los vectores en pantalla
+        posicion 10,26
+        printVector vector0
+        avanzar vector0
+        
+        posicion 11,26
+        printVector vector1
+        avanzar vector1
+        
+        posicion 12,26
+        printVector vector2
+        avanzar vector2
+        
+        posicion 13,26
+        printVector vector3
+        avanzar vector3
+        
+        posicion 14,26
+        printVector vector4
+        avanzar vector4
+        ;fin dibujar vectores en pantalla
+        
+
+        call Mostrar_Avatar
         
         MOV AX, puntos_Obtenidos      ; Cargar el valor de 'count' en AX
         MOV DX, OFFSET Print_Dato_Actual
@@ -756,28 +765,7 @@ Iniciar PROC NEAR
         MOV DX, OFFSET  Print_Dato_Actual ; DX apunta a la cadena
         INT 21h 
         
-    CALL Dibujar_Cuadro 
-    posicion 10,26
-    printVector vector0
-    avanzar vector0
-    
-    posicion 11,26
-    printVector vector1
-    avanzar vector1
-    
-    posicion 12,26
-    printVector vector2
-    avanzar vector2
-    
-    posicion 13,26
-    printVector vector3
-    avanzar vector3
-    
-    posicion 14,26
-    printVector vector4
-    avanzar vector4
-    call Mostrar_Obstaculo
-    call Mostrar_Avatar
+    CALL Dibujar_Cuadro
         RET
         INT_TO_STR PROC
         ; Esta funcion asume que el numero es menor o igual a 65535 (maximo valor de un registro AX)
