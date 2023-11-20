@@ -16,6 +16,7 @@
     Mensaje_Iniciar DB "3-Iniciar juego", 10, 13, "$"
     Mensaje_Acerca DB "4-Sobre Nosotros", 10, 13, "$"
     Mensaje_Fin DB "5-Salir", 10, 13, "$"
+    seleccionN DB "Seleccione el escenario", 10, 13, "1-Primer escenario", 10, 13, "2-Segundo escenario", 10, 13, "3-Tercer escenario", 10, 13, "4-Cuarto escenario", 10, 13, "$"
     Nombre DB 20 dup('$')
     Nivel DB 3 dup('$')
     Fin_de_La_Partida db "FIN DE LA PARTIDA$"
@@ -33,7 +34,7 @@
     BUFFER3 Db 7 DUP("$")
     Print_Ranking_Puntos db "Maximos Puntajes Optenidos Hasta el Momento: $"
     print_coma db ","
-    Print_vida db "Vidas: $"
+    Print_vida db "vida: $"
     Puntos1 dw 0
     Puntos2 dw 0
     Puntos3 dw 0
@@ -49,10 +50,14 @@
     sumar DB 10
     contar_ciclos db 0
     puntos_Obtenidos dw 1
-    vidas dw 3
+    vida dw 30
     ;carga y muestra de patron
     cuadro db 219        ; Caracter ASCII para representar el cuadro verde
     Archivo DB 'mapa.txt',0 ; Nombre del archivo
+    Archivo2 DB 'mapa2.txt',0 ; Nombre del archivo
+    Archivo3 DB 'mapa3.txt',0 ; Nombre del archivo
+    Archivo4 DB 'mapa4.txt',0 ; Nombre del archivo
+    Archivo5 DB 'mapa5.txt',0 ; Nombre del archivo
     vector0 db 30 dup(?)  ; Vector de longitud 30
     vector1 db 30 dup(?)  ; Vector de longitud 30
     vector2 db 30 dup(?)  ; Vector de longitud 30
@@ -61,13 +66,31 @@
     num db 10
     ccc db 10
 
+    ;Abrir archivo
+    Abrir_Archi macro arch
+        local Error_Abrir, sale
+        MOV AH, 3DH ; Peticion para abrir
+        MOV AL, 00 ; Archivo normal
+        LEA DX, arch
+        INT 21H
+        JC Error_Abrir ; Error?
+        MOV HANDLE, AX ; no, guardar manejador
+        jmp sale
+        Error_Abrir:
+            MOV ENDCDE, 01 ; si,
+            mov AH, 09h
+            LEA DX, Abrir_MSG ; desplegar
+            INT 21H
+        sale:
+        endm
+
     similar macro vectr   ;encargado de comparar
         local down
         lea di,vectr
         mov al, [di]      ; Carga el valor del elemento actual
         cmp al,'a'
         jne down
-        dec vidas
+        dec vida
         down:
         endm
     avanzar macro vect    ;encargado de corrimiento de vector
@@ -134,6 +157,7 @@
 .CODE
 MOV AX, @DATA
 MOV DS, AX 
+Abrir_Archi Archivo
 Inicio:
     mov puntos_Obtenidos , 1
     CALL Limpia
@@ -174,6 +198,8 @@ Mostrar_Inicio PROC NEAR
     Mostrar_Inicio ENDP
 
 Seleccion PROC NEAR
+    mov vida,30
+    mov fila,12
     posicion 18, 36
     mov ah, 01h
     int 21h
@@ -209,6 +235,7 @@ Establecer PROC NEAR
     CALL limpiar_datos
     CALL Limpia
     CALL Colocar_Cursor
+    
     posicion 1,30
     mov ah, 09h
     lea dx, Mensaje_Nombre
@@ -311,11 +338,41 @@ Establecer PROC NEAR
 
 
 Escenario PROC NEAR
+    CALL Limpia
+    posicion 2,2
+    MOV AH, 09h       ; Función 09h - Imprimir cadena
+        LEA DX, seleccionN; Dirección de la cadena
+        INT 21h
+
+        mov ah, 01h
+        int 21h
+        cmp al, '1'
+        je Salto_Escenario1
+        cmp al, '2'
+        je Salto_Escenario2
+        cmp al, '3'
+        je Salto_Escenario3
+        cmp al, '4'
+        je Salto_Escenario4
+        Salto_Escenario1:
+            Abrir_Archi Archivo
+            jmp ffff
+        Salto_Escenario2:
+            Abrir_Archi Archivo2
+            jmp ffff
+        Salto_Escenario3:
+            Abrir_Archi Archivo3
+            jmp ffff
+        Salto_Escenario4:
+            Abrir_Archi Archivo4
+            jmp ffff
+
+    ffff:
+
     RET
     Escenario ENDP
 Iniciar PROC NEAR    
     ;cambios Brian
-    CALL Abrir_Archi
     CALL Llenar_Vector
     CALL Llenar_Vector1
     CALL Llenar_Vector2
@@ -351,14 +408,14 @@ Iniciar PROC NEAR
     je subir_nivel
        call compare
        
-    cmp vidas,0
+    cmp vida,0
     je salir_Iniciar
     sin_tecla_presionada:
     cmp contar_ciclos, 10
     jge aumentar_nivel
     inc contar_ciclos
     call compare
-    cmp vidas,0
+    cmp vida,0
     je salir_Iniciar
     jmp ciclo
     aumentar_nivel:
@@ -679,23 +736,6 @@ Iniciar PROC NEAR
             finn4:
         ret
     Llenar_Vector4 ENDP
-    
-    ;Abrir archivo
-    Abrir_Archi PROC 
-      MOV AH, 3DH ; Peticion para abrir
-      MOV AL, 00 ; Archivo normal
-      LEA DX, Archivo
-      INT 21H
-      JC Error_Abrir ; Error?
-      MOV HANDLE, AX ; no, guardar manejador
-      RET
-      Error_Abrir:
-         MOV ENDCDE, 01 ; si,
-         mov AH, 09h
-         LEA DX, Abrir_MSG ; desplegar
-         INT 21H
-         RET
-   Abrir_Archi ENDP
 
     ;Datos
     Mostrar_Datos PROC NEAR
@@ -747,7 +787,7 @@ Iniciar PROC NEAR
         int 21h
         mov Max_Mostrar_Datos, 4
         Call LlenarCadena
-        MOV AX, vidas      ; Cargar el valor de 'count' en AX
+        MOV AX, vida      ; Cargar el valor de 'count' en AX
         MOV DX, OFFSET Print_Dato_Actual
         CALL INT_TO_STR  ; Llama a una funcion para convertir el numero en una cadena
         MOV AH, 09h        ; Servicio para imprimir una cadena
