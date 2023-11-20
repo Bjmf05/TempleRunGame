@@ -157,6 +157,13 @@
 MOV AX, @DATA
 MOV DS, AX 
 Abrir_Archi Archivo
+    ;cambios Brian
+    CALL Llenar_Vector
+    CALL Llenar_Vector1
+    CALL Llenar_Vector2
+    CALL Llenar_Vector3
+    CALL Llenar_Vector4
+    ;fin cambios
 Inicio:
     mov puntos_Obtenidos , 1
     CALL Limpia
@@ -252,7 +259,7 @@ Establecer PROC NEAR
     Seguir2:
     
     posicion 5, 0
-     mov ah, 09h
+    mov ah, 09h
     lea dx, Mensaje_Nivel
     int 21h
     mov si,00h
@@ -352,32 +359,55 @@ Escenario PROC NEAR
         cmp al, '3'
         je Salto_Escenario3
         cmp al, '4'
-        je Salto_Escenario4
+        je saltoPrev
         Salto_Escenario1:
             Abrir_Archi Archivo
+            ;cambios Brian
+            CALL Llenar_Vector
+            CALL Llenar_Vector1
+            CALL Llenar_Vector2
+            CALL Llenar_Vector3
+            CALL Llenar_Vector4
+            ;fin cambios
             jmp ffff
+        saltoPrev:
+         jmp Salto_Escenario4
         Salto_Escenario2:
             Abrir_Archi Archivo2
+            ;cambios Brian
+            CALL Llenar_Vector
+            CALL Llenar_Vector1
+            CALL Llenar_Vector2
+            CALL Llenar_Vector3
+            CALL Llenar_Vector4
+            ;fin cambios
             jmp ffff
         Salto_Escenario3:
             Abrir_Archi Archivo3
+            ;cambios Brian
+            CALL Llenar_Vector
+            CALL Llenar_Vector1
+            CALL Llenar_Vector2
+            CALL Llenar_Vector3
+            CALL Llenar_Vector4
+            ;fin cambios
             jmp ffff
         Salto_Escenario4:
             Abrir_Archi Archivo4
+            ;cambios Brian
+            CALL Llenar_Vector
+            CALL Llenar_Vector1
+            CALL Llenar_Vector2
+            CALL Llenar_Vector3
+            CALL Llenar_Vector4
+            ;fin cambios
             jmp ffff
 
     ffff:
-
     RET
     Escenario ENDP
-Iniciar PROC NEAR    
-    ;cambios Brian
-    CALL Llenar_Vector
-    CALL Llenar_Vector1
-    CALL Llenar_Vector2
-    CALL Llenar_Vector3
-    CALL Llenar_Vector4
-    ;fin cambios
+    
+Iniciar PROC NEAR
     mov AH, 2ch
     int 21H
     mov primer_Segundo, dh
@@ -995,7 +1025,7 @@ Fin PROC
     int 21h
     Fin ENDP
 
-Limpia PROC          
+Limpia PROC
    mov ax,0600h
    mov bh,05h
    mov cx,0000h
