@@ -1,3 +1,18 @@
+TEMPLE RUN ENSAMBLADOR
+Saludos aventurero! Somos un apasionado equipo de desarrollo, compuesto por dos estudiantes universitarios, Breiner y Brian. En nuestro viaje academico, nos embarcamos en la emocionante tarea de crear TEMPLE RUN, un juego inspirado en el original pero desarrollado en ensamblador.
+
+Nuestra Historia:
+TEMPLE RUN nacio como un proyecto universitario donde buscamos desafiar los limites de la programacion y la creatividad. Despues de incansables horas de codificacion en ensamblador, nos complace presentarle nuestro juego.
+
+Sobre TEMPLE RUN:
+TEMPLE RUN es una experiencia de juego intensa, donde los jugadores se sumergen en una carrera sin fin.
+Desarrollado completamente en ensamblador, el juego es un testimonio de nuestra "dedicacion" y "pasion" por la programacion de bajo nivel.
+
+Caracteristicas Destacadas:
+Graficos en ensamblador para una experiencia visual unica.
+Controles intuitivos que desafian tus habilidades.
+Niveles en aumento continuo para una jugabilidad infinita.
+
 Creado por:
-Breiner Muñoz 
+Breiner Munoz 
 Brian Zeledon
