@@ -25,7 +25,7 @@
     Print_Nivel DB "Nivel de dificultad: $"
     Print_Puntos_Obtenidos DB "Puntos obtenidos: $"
     Print_Dato_Actual DB 7 dup("$")
-    Salir_Puntos_Print db "Presione Cualquier tecla para salir", 10, 13, "$"
+    Salir_Puntos_Print db "Presione Enter para salir", 10, 13, "$"
     Print_Instrucciones DB "Instrucciones: ", 10, 13, "Para moverse arriba presione la tecla 'w' o la flecha hacia arriba", 10, 13, "Para moverse abajo presione la tecla 's' o la flecha hacia abajo", 10, 13, "Para pausar el juego presione la tecla 'p'", 10, 13, "Para subir de nivel presione la tecla 'n'", 10, 13, "Para salir del juego presione la tecla 'e'", 10, 13, "$"
   ;variables para el juego
     Archivo_Puntos DB "Puntajes.txt", 0
@@ -34,7 +34,7 @@
     BUFFER3 Db 7 DUP("$")
     Print_Ranking_Puntos db "Maximos Puntajes Optenidos Hasta el Momento: $"
     print_coma db ","
-    Print_vida db "vida: $"
+    Print_vida db "Puntos de vida: $"
     Puntos1 dw 0
     Puntos2 dw 0
     Puntos3 dw 0
@@ -484,6 +484,7 @@ Iniciar PROC NEAR
     CALL Mostrar_Puntajes_de_Archivo
     mov [Nivel_actual], 1
     mov [puntos_Obtenidos], 1
+    mov [Nombre], ('$')
     RET
         pausa proc near
             CALL Limpia
