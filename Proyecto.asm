@@ -18,6 +18,7 @@
     Mensaje_Fin DB "5-Salir", 10, 13, "$"
     Nombre DB 20 dup('$')
     Nivel DB 3 dup('$')
+    Fin_de_La_Partida db "FIN DE LA PARTIDA$"
     Archivo_Acerca DB "Acerca.txt", 0
     Print_Nombre DB "Nombre del Jugador: $"
     Print_Nivel DB "Nivel de dificultad: $"
@@ -30,7 +31,7 @@
     BUFFER Db 7 DUP("$")
     BUFFER2 Db 7 DUP("$")
     BUFFER3 Db 7 DUP("$")
-    Print_Ranking_Puntos db "Maximos Puntajes Optenidos: $"
+    Print_Ranking_Puntos db "Maximos Puntajes Optenidos Hasta el Momento: $"
     print_coma db ","
     Puntos1 dw 0
     Puntos2 dw 0
@@ -334,12 +335,6 @@ Iniciar PROC NEAR
 
     mov ah, 01h
     int 16h  ; Se preciona una tecla?
-
-<<<<<<< HEAD
-=======
-
-
->>>>>>> 11ebe6882443802c6bf07bd76d5bbe8e08e329ee
     jz sin_tecla_presionada; Si se preciona una tecla, entonces se lee el codigo de la tecla 
     mov ah, 00h
     int 16h
@@ -1008,6 +1003,10 @@ Mostrar_Puntajes_de_Archivo PROC
    CALL Escribir_en_Archivo
 
    Fin_Puntos:
+   posicion 10, 30
+      mov AH, 09h 
+	lea dx, Fin_de_La_Partida
+	int 21h
    posicion 0, 1
       mov AH, 09h 
 	lea dx, Salir_Puntos_Print
